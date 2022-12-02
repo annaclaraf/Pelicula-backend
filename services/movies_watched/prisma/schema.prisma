@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MoviesWatched {
+  userId  String
+  id Int
+  poster_path String
+  registerDate DateTime @default(now())
+
+  @@id([userId, id])
+}

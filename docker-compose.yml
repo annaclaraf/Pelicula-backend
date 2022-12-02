@@ -1,0 +1,77 @@
+version: "3"
+
+services:
+  database:
+    image: postgres
+    container_name: database
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres 
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pelicula
+    volumes:
+      - pgdata:/data/postgres
+    healthcheck:
+      test: "exit 0"
+
+  movies_to_watch:
+    build: .
+    container_name: movies_to_watch
+    ports:
+      - 3001:5000
+    volumes:
+      - "./services/movies_to_watch:/services"
+    links:
+      - database
+    depends_on:
+      database: 
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    command: >
+      bash -c "npm install && npm run prisma:start && npm run start:moviesToWatch"
+
+  movies_watched:
+    build: .
+    container_name: movies_watched
+    ports:
+      - 3002:5000
+    volumes:
+      - "./services/movies_watched:/services"
+    links:
+      - database
+    depends_on:
+      database:
+        condition: service_healthy
+      movies_to_watch:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    command: >
+      bash -c "npm install && npm run prisma:start && npm run start:moviesWatched"
+  
+  users:
+    build: .
+    container_name: users
+    ports:
+      - 3003:5000
+    volumes:
+      - "./services/users:/services"
+    links:
+      - database
+    depends_on:
+      database:
+        condition: service_healthy
+      movies_to_watch:
+        condition: service_healthy
+      movies_watched:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    command: >
+      bash -c "npm install && npm run prisma:start && npm run start:users"
+
+volumes:
+  pgdata:
+    driver: local
